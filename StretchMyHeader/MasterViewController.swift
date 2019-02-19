@@ -13,10 +13,13 @@ class MasterViewController: UITableViewController {
   // MARK: Constants
   
   private let kTableHeaderHeight: CGFloat = 300.0
+  private let kTableHeaderCutAway: CGFloat = 80.0
   
   // MARK: Properties
   
   var newsManager: NewsManager!
+  
+  var headerMaskLayer: CAShapeLayer!
   
   @IBOutlet weak var customHeaderView: UIView!
   @IBOutlet weak var dateLabel: UILabel!
@@ -38,8 +41,15 @@ class MasterViewController: UITableViewController {
     tableView.addSubview(customHeaderView)
     customHeaderView.frame.origin.y = -kTableHeaderHeight
     
-    tableView.contentInset = UIEdgeInsets(top: kTableHeaderHeight, left: 0.0, bottom: 0.0, right: 0.0)
-    tableView.contentOffset = CGPoint(x: 0.0, y: -kTableHeaderHeight)
+    let effectiveHeight = kTableHeaderHeight - kTableHeaderCutAway/2
+    
+    tableView.contentInset = UIEdgeInsets(top: effectiveHeight, left: 0.0, bottom: 0.0, right: 0.0)
+    tableView.contentOffset = CGPoint(x: 0.0, y: -effectiveHeight)
+    
+    headerMaskLayer = CAShapeLayer()
+    headerMaskLayer.fillColor = UIColor.black.cgColor
+    customHeaderView.layer.mask = headerMaskLayer
+    updateHeaderView()
   }
   
   // MARK: - Table View
@@ -72,11 +82,19 @@ class MasterViewController: UITableViewController {
   // MARK: Private Methods
   
   func updateHeaderView() {
-    if tableView.contentOffset.y >= -kTableHeaderHeight {
-      customHeaderView.frame.origin.y = -kTableHeaderHeight
+    let effectiveHeight = kTableHeaderHeight - kTableHeaderCutAway/2
+    if tableView.contentOffset.y >= -effectiveHeight {
+      customHeaderView.frame.origin.y = -effectiveHeight
     } else {
-      customHeaderView.frame = CGRect(x: customHeaderView.frame.origin.x, y: tableView.contentOffset.y, width: customHeaderView.frame.width, height: tableView.contentOffset.y * -1.0)
+      customHeaderView.frame = CGRect(x: customHeaderView.frame.origin.x, y: tableView.contentOffset.y, width: customHeaderView.frame.width, height: -tableView.contentOffset.y + kTableHeaderCutAway/2)
     }
+    
+    let path = UIBezierPath()
+    path.move(to: CGPoint(x: 0, y: 0))
+    path.addLine(to: CGPoint(x: customHeaderView.frame.width, y: 0))
+    path.addLine(to: CGPoint(x: customHeaderView.frame.width, y: customHeaderView.frame.height))
+    path.addLine(to: CGPoint(x: 0, y: customHeaderView.frame.height - kTableHeaderCutAway))
+    headerMaskLayer?.path = path.cgPath
   }
   
 }
